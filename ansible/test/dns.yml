@@ -1,0 +1,16 @@
+---
+- hosts: testtechnique_app_1
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.9
+
+  tasks:
+  
+    - name: 
+      shell: |
+        /server/benchmark --host redis.server.private -p 6379 -n 10000000 --timeit >> /tmp/res.dns1.txt 2&>1
+        /server/benchmark --host redis1.server.private -p 6379 -n 10000000 --timeit >> /tmp/res.dns2.txt 2&>1
+      
+      register: cluster
+
+    - debug:
+        var: "{{ cluster.stdout }}"

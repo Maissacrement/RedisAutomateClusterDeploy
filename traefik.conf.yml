@@ -1,0 +1,35 @@
+## Static configuration
+defaultEntryPoints: ["http"]
+
+log:
+  level: DEBUG
+
+api:
+  insecure: true
+  
+traefik:
+  enable: true
+
+entryPoints:
+  my-router:
+    address: ":80"
+
+providers:
+  docker:
+    useBindPortIP: true
+    exposedbydefault: false
+    network: ""
+
+http:
+  routers:
+    my-router:
+      rule: "Host(`redis.server.private`)"
+      service: nodea
+
+  services:
+    nodea:
+      loadBalancer:
+        servers:
+          address: "172.23.27.2:6379"
+          address: "172.23.28.2:6379"
+          address: "172.23.29.254:6379"

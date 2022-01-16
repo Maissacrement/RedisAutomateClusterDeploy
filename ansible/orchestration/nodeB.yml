@@ -1,0 +1,51 @@
+---
+- hosts: all
+
+  tasks:
+
+    - include_vars:
+        file: ./env.json
+        name: jsonenv
+
+    - name: Launch docker compose in server
+      community.docker.docker_compose:
+        project_name: nodeB
+        pull: yes
+        restarted: yes
+        nocache: yes
+        build: yes
+        scale:
+          nodeb-slave: 3
+        definition:
+          version: '3.9'
+          services:
+            nodeb:
+              image: registry.gitlab.com/server1/redis/redis-master
+              networks: 
+                nodeb:
+                  ipv4_address: "{{ jsonenv['nodeb']['master'] }}"
+                dnsserver: {}
+              environment:
+                HOST: "{{ jsonenv['nodeb']['master'] }}"
+                PORT: "{{ jsonenv['nodeb']['master_port'] }}"
+
+            nodeb-slave:
+              image: registry.gitlab.com/server1/redis/redis-slave
+              depends_on:
+                - nodeb
+              networks:
+                - nodeb
+              environment:
+                MASTER_IP: "{{ jsonenv['nodeb']['master'] }}"
+                MASTER_PORT: "{{ jsonenv['nodeb']['master_port'] }}"
+
+          networks:
+            nodeb:
+              external: true
+            dnsserver:
+              external: true
+
+      register: composer
+
+    - debug:
+        var: composer

@@ -1,0 +1,69 @@
+---
+- hosts: all
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.9
+
+  tasks:
+
+    - include_vars:
+        file: ./env.json
+        name: jsonenv
+
+    - name: Launch docker compose in server
+      community.docker.docker_compose:
+        project_name: cluster
+        pull: yes
+        restarted: yes
+        nocache: yes
+        build: yes
+        definition:
+          version: '3.9'
+          services:
+            dns:
+              image: registry.gitlab.com/maissacrement/dns
+              domainname: server.private
+              hostname: dns
+              networks:
+                dnsserver:
+                  ipv4_address: "{{ jsonenv['dns']['master'] }}" # ip dns server
+
+              environment:
+                IP: "{{ jsonenv['dns']['master'] }}" # ip dns server
+                CIDR: "{{ jsonenv['dns']['cidr'] }}" # ip address auth range
+                DNS_BASE: 'server.private' # dns server base name
+                DNS1: "redis:{{ jsonenv['nodea']['cluster'] }}" # [subdomain]:[targetedIp]
+                DNS2: "redis:{{ jsonenv['nodeb']['cluster'] }}" 
+                DNS3: "redis:{{ jsonenv['nodec']['cluster'] }}" 
+              extra_hosts:
+                - "redis:{{ jsonenv['nodea']['cluster'] }}"
+                - "redis:{{ jsonenv['nodeb']['cluster'] }}"
+                - "redis:{{ jsonenv['nodec']['cluster'] }}"
+
+            dns-replica:
+              image: registry.gitlab.com/maissacrement/dns
+              domainname: server.private
+              hostname: dnsr
+              networks:
+                dnsserver:
+                  ipv4_address: "{{ jsonenv['dnsr']['master'] }}" # ip dns server
+
+              environment:
+                IP: "{{ jsonenv['dnsr']['master'] }}" # ip dns server
+                CIDR: "{{ jsonenv['dnsr']['cidr'] }}" # ip address auth range
+                DNS_BASE: 'server.private' # dns server base name
+                DNS1: "redis1:{{ jsonenv['nodea']['cluster'] }}" # [subdomain]:[targetedIp]
+                DNS2: "redis1:{{ jsonenv['nodeb']['cluster'] }}" 
+                DNS3: "redis1:{{ jsonenv['nodec']['cluster'] }}" 
+              extra_hosts:
+                - "redis1:{{ jsonenv['nodea']['cluster'] }}"
+                - "redis1:{{ jsonenv['nodeb']['cluster'] }}"
+                - "redis1:{{ jsonenv['nodec']['cluster'] }}"
+
+          networks:
+            dnsserver:
+              external: true
+
+      register: composer
+
+    - debug:
+        var: composer

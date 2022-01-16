@@ -1,0 +1,49 @@
+---
+- hosts: all
+
+  tasks:
+
+    - include_vars:
+        file: ./env.json
+        name: jsonenv
+
+    - name: Launch docker compose in server
+      community.docker.docker_compose:
+        project_name: nodec
+        pull: yes
+        restarted: yes
+        nocache: yes
+        build: yes
+        scale:
+          nodec-slave: 3
+        definition:
+          version: '3.9'
+          services:
+            nodec:
+              image: registry.gitlab.com/server1/redis/redis-master
+              networks: 
+                nodec:
+                  ipv4_address: "{{ jsonenv['nodec']['master'] }}"
+                dnsserver: {}
+              environment:
+                HOST: "{{ jsonenv['nodec']['master'] }}"
+                PORT: "{{ jsonenv['nodec']['master_port'] }}"
+
+            nodec-slave:
+              image: registry.gitlab.com/server1/redis/redis-slave
+              networks:
+                - nodec
+              environment:
+                MASTER_IP: "{{ jsonenv['nodec']['master'] }}"
+                MASTER_PORT: "{{ jsonenv['nodec']['master_port'] }}"
+
+          networks:
+            nodec:
+              external: true
+            dnsserver:
+              external: true
+
+      register: composer
+
+    - debug:
+        var: composer

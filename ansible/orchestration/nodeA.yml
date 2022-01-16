@@ -1,0 +1,51 @@
+---
+- hosts: all
+
+  tasks:
+
+    - include_vars:
+        file: ./env.json
+        name: jsonenv
+
+    - name: Launch docker compose in server
+      community.docker.docker_compose:
+        project_name: nodeA
+        pull: yes
+        restarted: yes
+        nocache: yes
+        build: yes
+        scale:
+          nodea-slave: 3
+        definition:
+          version: '3.9'
+          services:
+            nodea:
+              image: registry.gitlab.com/server1/redis/redis-master
+              networks: 
+                nodea:
+                  ipv4_address: "{{ jsonenv['nodea']['master'] }}"
+                dnsserver: {}
+              environment:
+                HOST: "{{ jsonenv['nodea']['master'] }}"
+                PORT: "{{ jsonenv['nodea']['master_port'] }}"
+
+            nodea-slave:
+              image: registry.gitlab.com/server1/redis/redis-slave
+              depends_on:
+                - nodea
+              networks:
+                - nodea
+              environment:
+                MASTER_IP: "{{ jsonenv['nodea']['master'] }}"
+                MASTER_PORT: "{{ jsonenv['nodea']['master_port'] }}"
+
+          networks:
+            nodea:
+              external: true
+            dnsserver:
+              external: true
+
+      register: composer
+
+    - debug:
+        var: composer

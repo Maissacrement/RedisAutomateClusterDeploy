@@ -1,0 +1,20 @@
+---
+- hosts: all
+  vars:
+    ansible_connection: local
+    ansible_python_interpreter: /usr/bin/python3.9
+
+  tasks:
+
+    - include_vars:
+        file: ./env.json
+        name: jsonenv
+
+    - name: Connecter le noeuds principal aux noeud esclave
+      shell: docker exec -it $(docker ps -f name='nodea_nodea_1' -q) /bin/sh -c "redis-cli --cluster create {{ jsonenv['nodeb']['cluster'] }}:{{ jsonenv['nodeb']['master_port'] }} {{ jsonenv['nodec']['cluster'] }}:{{ jsonenv['nodec']['master_port'] }} {{ jsonenv['nodea']['cluster'] }}:{{ jsonenv['nodea']['master_port'] }} --cluster-yes"
+      register: cluster
+
+    - debug:
+        var: cluster
+
+...

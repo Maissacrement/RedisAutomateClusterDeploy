@@ -1,0 +1,43 @@
+---
+- hosts: all
+
+  tasks:
+
+    - include_vars:
+        file: ./env.json
+        name: jsonenv
+
+    - name: Log into DockerHub
+      docker_login:
+        registry_url: "{{ jsonenv['GLOBAL']['registry'] }}"
+        username: "{{ jsonenv['DOCKER']['username'] }}"
+        password: "{{ jsonenv['DOCKER']['password'] }}" 
+
+    - name: Create "nodeA" network instance
+      community.docker.docker_network:
+        name: nodea
+        ipam_config:
+          - subnet: "{{ jsonenv['nodea']['cidr'] }}"
+            gateway: "{{ jsonenv['nodea']['gateway'] }}"
+
+    - name: Create "nodeB" network instance
+      community.docker.docker_network:
+        name: nodeb
+        ipam_config:
+          - subnet: "{{ jsonenv['nodeb']['cidr'] }}"
+            gateway: "{{ jsonenv['nodeb']['gateway'] }}"
+
+    - name: Create "nodeC" network instance
+      community.docker.docker_network:
+        name: nodec
+        ipam_config:
+          - subnet: "{{ jsonenv['nodec']['cidr'] }}"
+            gateway: "{{ jsonenv['nodec']['gateway'] }}"
+
+    - name: Create "cluster" network instance
+      community.docker.docker_network:
+        name: dnsserver
+        ipam_config:
+          - subnet: "{{ jsonenv['dns']['cidr'] }}"
+            gateway: "{{ jsonenv['dns']['gateway'] }}"
+    

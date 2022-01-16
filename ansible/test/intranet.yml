@@ -1,0 +1,17 @@
+---
+- hosts: all
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.9
+
+  tasks:
+
+    - name: Run benchmark on redis node instance
+      shell: |
+        redis-benchmark -h 127.0.0.1 -p 6379 --csv -t ping,set,get -n 1000 -d 10000000
+      
+      register: cluster
+
+    - debug:
+        var: "{{ cluster.stdout }}"
+
+...

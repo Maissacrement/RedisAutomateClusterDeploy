@@ -1,0 +1,8 @@
+---
+all:
+  hosts:
+    nodeb_nodeb_1:
+      ansible_connection: docker
+    nodec_nodec_1:
+      ansible_connection: docker
+...

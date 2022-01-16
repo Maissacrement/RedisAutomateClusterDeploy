@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: ./server
+    networks:
+      dnsserver: {}
+    env_file: ./server/.env
+    dns: 
+      - 172.200.30.254
+    dns_search: 
+      - redis.server.private
+    ports: 
+      - "8888:8888"
+
+networks:
+  dnsserver:
+    external: true

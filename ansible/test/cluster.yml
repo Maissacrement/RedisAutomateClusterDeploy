@@ -1,0 +1,15 @@
+---
+- hosts: nodea_nodea_1
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.9
+
+  tasks:
+
+    - name: Run benchmark on redis instance
+      shell: |
+        redis-benchmark --cluster --csv -n 1000000 -d 1000 > ./redis.csv;cat ./redis.csv
+      
+      register: cluster
+
+    - debug:
+        var: cluster
